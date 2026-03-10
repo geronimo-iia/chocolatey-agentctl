@@ -61,7 +61,9 @@ jobs:
 
       - name: Test package locally
         run: |
+          $packageFile = Get-ChildItem -Name "*.nupkg" | Select-Object -First 1
           choco install agentctl -s . -y
+          refreshenv
           agentctl --version
 
       - name: Upload package artifact
@@ -76,4 +78,5 @@ jobs:
           CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
         run: |
           choco apikey -k $env:CHOCOLATEY_API_KEY -s https://push.chocolatey.org/
-          choco push *.nupkg -s https://push.chocolatey.org/
+          $packageFile = Get-ChildItem -Name "*.nupkg" | Select-Object -First 1
+          choco push $packageFile -s https://push.chocolatey.org/
