@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>agentctl</id>
+    <version>0.5.1</version>
+    <packageSourceUrl>https://github.com/geronimo-iia/chocolatey-agentctl</packageSourceUrl>
+    <owners>Jerome Guibert</owners>
+    <title>agentctl</title>
+    <authors>Jerome Guibert</authors>
+    <projectUrl>https://github.com/geronimo-iia/agentctl</projectUrl>
+    <copyright>2026 Jerome Guibert</copyright>
+    <licenseUrl>https://github.com/geronimo-iia/agentctl/blob/main/LICENSE-MIT</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/geronimo-iia/agentctl</projectSourceUrl>
+    <docsUrl>https://github.com/geronimo-iia/agentctl/blob/main/README.md</docsUrl>
+    <bugTrackerUrl>https://github.com/geronimo-iia/agentctl/issues</bugTrackerUrl>
+    <tags>cli agent hub validation skill management</tags>
+    <summary>CLI for agent hub validation, index generation, and skill management</summary>
+    <description>
+agentctl is a command-line tool for validating agent hubs, generating index files, and managing skills. 
+It supports hub validation, index generation, skill installation/management, and configuration management.
+    </description>
+    <releaseNotes>https://github.com/geronimo-iia/agentctl/blob/main/CHANGELOG.md</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

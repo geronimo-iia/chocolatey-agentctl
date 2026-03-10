@@ -1,0 +1,79 @@
+name: Chocolatey Package
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to package'
+        required: true
+        default: '0.5.1'
+
+jobs:
+  chocolatey:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Chocolatey
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+      - name: Get version
+        id: version
+        run: |
+          if ("${{ github.event_name }}" -eq "release") {
+            $version = "${{ github.event.release.tag_name }}" -replace '^v', ''
+          } else {
+            $version = "${{ github.event.inputs.version }}"
+          }
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Get SHA256 from GitHub release
+        id: sha256
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $releaseUrl = "https://api.github.com/repos/geronimo-iia/agentctl/releases/tags/v$version"
+          $release = Invoke-RestMethod -Uri $releaseUrl
+          $asset = $release.assets | Where-Object { $_.name -eq "x86_64-pc-windows-msvc.zip" }
+          $sha256 = $asset.digest.Split(':')[1]
+          echo "sha256=$sha256" >> $env:GITHUB_OUTPUT
+
+      - name: Update package files
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $sha256 = "${{ steps.sha256.outputs.sha256 }}"
+          
+          # Update nuspec
+          (Get-Content agentctl.nuspec) -replace '<version>.*</version>', "<version>$version</version>" | Set-Content agentctl.nuspec
+          
+          # Update install script
+          $installScript = Get-Content tools/chocolateyinstall.ps1
+          $installScript = $installScript -replace '\$version = ''.*''', "`$version = '$version'"
+          $installScript = $installScript -replace '\$checksum64 = ''.*''', "`$checksum64 = '$sha256'"
+          $installScript | Set-Content tools/chocolateyinstall.ps1
+
+      - name: Create Chocolatey package
+        run: choco pack
+
+      - name: Test package locally
+        run: |
+          choco install agentctl -s . -y
+          agentctl --version
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chocolatey-package
+          path: "*.nupkg"
+
+      - name: Publish to Chocolatey (if API key available)
+        if: env.CHOCOLATEY_API_KEY != ''
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        run: |
+          choco apikey -k $env:CHOCOLATEY_API_KEY -s https://push.chocolatey.org/
+          choco push *.nupkg -s https://push.chocolatey.org/
